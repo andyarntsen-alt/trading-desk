@@ -9,16 +9,29 @@ export default function SignOutPage() {
   useEffect(() => {
     const signOut = async () => {
       try {
-        // Sign out on client first
         const supabase = createClient()
-        await supabase.auth.signOut({ scope: 'local' })
-        setStatus('Omdirigerer...')
+        
+        // Sign out - this clears the session
+        const { error } = await supabase.auth.signOut()
+        
+        if (error) {
+          console.error('Sign out error:', error)
+        }
+        
+        setStatus('Utlogget!')
+        
+        // Clear any localStorage items
+        localStorage.removeItem('supabase.auth.token')
+        
+        // Small delay then redirect
+        await new Promise(r => setTimeout(r, 500))
+        
       } catch (e) {
         console.error('Sign out error:', e)
       }
       
-      // Redirect to server-side signout which clears cookies and redirects home
-      window.location.href = '/api/auth/signout'
+      // Hard redirect with cache bypass
+      window.location.replace('/')
     }
     signOut()
   }, [])
