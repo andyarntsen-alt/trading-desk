@@ -9,27 +9,32 @@ export default function SignOutPage() {
   useEffect(() => {
     const signOut = async () => {
       try {
-        const supabase = createBrowserClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
         
-        // Sign out from Supabase
-        const { error } = await supabase.auth.signOut()
-        
-        if (error) {
-          console.error('Sign out error:', error)
-          setStatus('Feil ved utlogging...')
-        } else {
-          setStatus('Utlogget! Omdirigerer...')
+        if (!url || !key) {
+          console.error('Missing Supabase env vars')
+          setStatus('Mangler konfigurasjon...')
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          window.location.href = '/'
+          return
         }
         
+        const supabase = createBrowserClient(url, key)
+        
+        // Sign out from Supabase (scope: 'local' to just clear this browser)
+        await supabase.auth.signOut({ scope: 'local' })
+        
+        setStatus('Utlogget! Omdirigerer...')
+        
         // Wait a moment to ensure cookies are cleared
-        await new Promise(resolve => setTimeout(resolve, 500))
+        await new Promise(resolve => setTimeout(resolve, 300))
         
       } catch (e) {
         console.error('Sign out error:', e)
-        setStatus('Feil ved utlogging...')
+        // Even if there's an error, redirect anyway
+        setStatus('Omdirigerer...')
+        await new Promise(resolve => setTimeout(resolve, 300))
       }
       
       // Hard redirect to clear all state
