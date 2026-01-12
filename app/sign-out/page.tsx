@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase/client'
 
 export default function SignOutPage() {
   const [status, setStatus] = useState('Logger ut...')
@@ -9,18 +9,7 @@ export default function SignOutPage() {
   useEffect(() => {
     const signOut = async () => {
       try {
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-        
-        if (!url || !key) {
-          console.error('Missing Supabase env vars')
-          setStatus('Mangler konfigurasjon...')
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          window.location.href = '/'
-          return
-        }
-        
-        const supabase = createBrowserClient(url, key)
+        const supabase = createClient()
         
         // Sign out from Supabase (scope: 'local' to just clear this browser)
         await supabase.auth.signOut({ scope: 'local' })
