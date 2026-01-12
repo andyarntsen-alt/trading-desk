@@ -9,23 +9,16 @@ export default function SignOutPage() {
   useEffect(() => {
     const signOut = async () => {
       try {
-        // 1. Sign out on server (clears httpOnly cookies)
-        await fetch('/api/auth/signout', { method: 'POST' })
-        
-        // 2. Sign out on client
+        // Sign out on client first
         const supabase = createClient()
         await supabase.auth.signOut({ scope: 'local' })
-        
-        setStatus('Utlogget! Omdirigerer...')
-        
+        setStatus('Omdirigerer...')
       } catch (e) {
         console.error('Sign out error:', e)
-        setStatus('Omdirigerer...')
       }
       
-      // Wait a moment then hard redirect
-      await new Promise(resolve => setTimeout(resolve, 500))
-      window.location.href = '/'
+      // Redirect to server-side signout which clears cookies and redirects home
+      window.location.href = '/api/auth/signout'
     }
     signOut()
   }, [])

@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-export async function POST() {
+export async function GET(request: Request) {
   const cookieStore = await cookies()
 
   const supabase = createServerClient(
@@ -25,8 +25,9 @@ export async function POST() {
   // Sign out from Supabase
   await supabase.auth.signOut()
 
-  // Create response
-  const response = NextResponse.json({ success: true })
+  // Redirect to home page
+  const url = new URL(request.url)
+  const response = NextResponse.redirect(new URL('/', url.origin))
   
   // Manually clear all Supabase auth cookies
   const allCookies = cookieStore.getAll()
@@ -40,4 +41,8 @@ export async function POST() {
   }
 
   return response
+}
+
+export async function POST() {
+  return GET()
 }
