@@ -1,66 +1,53 @@
-import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
-  try {
-    const cookieStore = await cookies()
-    
-    // Get origin from request
-    const origin = new URL(request.url).origin
+  const cookieStore = await cookies()
+  const origin = new URL(request.url).origin
 
-    // Try to sign out from Supabase
-    try {
-      const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            getAll() {
-              return cookieStore.getAll()
-            },
-            setAll(cookiesToSet) {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              )
-            },
-          },
-        }
-      )
-      await supabase.auth.signOut()
-    } catch (e) {
-      console.error('Supabase signout error:', e)
+  // Get all cookies and find Supabase ones
+  const allCookies = cookieStore.getAll()
+  
+  // Create redirect response
+  const response = NextResponse.redirect(`${origin}/`)
+  
+  // Delete ALL cookies that might be Supabase-related
+  for (const cookie of allCookies) {
+    // Clear any cookie that starts with 'sb-' (Supabase auth cookies)
+    if (cookie.name.startsWith('sb-')) {
+      // Delete with various path options to ensure it's cleared
+      response.cookies.delete(cookie.name)
+      response.cookies.set(cookie.name, '', { 
+        expires: new Date(0), 
+        path: '/',
+        maxAge: 0,
+      })
     }
-
-    // Redirect to home page
-    const response = NextResponse.redirect(`${origin}/`)
-    
-    // Clear all potential auth cookies
-    const cookieNames = [
-      'sb-access-token',
-      'sb-refresh-token', 
-      `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`,
-    ]
-    
-    for (const name of cookieNames) {
-      response.cookies.set(name, '', { expires: new Date(0), path: '/' })
-    }
-    
-    // Also try to clear any sb- cookies
-    const allCookies = cookieStore.getAll()
-    for (const cookie of allCookies) {
-      if (cookie.name.startsWith('sb-')) {
-        response.cookies.set(cookie.name, '', { expires: new Date(0), path: '/' })
-      }
-    }
-
-    return response
-  } catch (e) {
-    console.error('Signout route error:', e)
-    // Even on error, redirect home
-    const origin = new URL(request.url).origin
-    return NextResponse.redirect(`${origin}/`)
   }
+  
+  // Also explicitly try common Supabase cookie names
+  const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([^.]+)/)?.[1]
+  if (projectRef) {
+    const authCookieName = `sb-${projectRef}-auth-token`
+    response.cookies.delete(authCookieName)
+    response.cookies.set(authCookieName, '', { 
+      expires: new Date(0), 
+      path: '/',
+      maxAge: 0,
+    })
+    
+    // Also the chunked versions
+    for (let i = 0; i < 10; i++) {
+      response.cookies.delete(`${authCookieName}.${i}`)
+      response.cookies.set(`${authCookieName}.${i}`, '', { 
+        expires: new Date(0), 
+        path: '/',
+        maxAge: 0,
+      })
+    }
+  }
+
+  return response
 }
 
 export async function POST(request: Request) {
