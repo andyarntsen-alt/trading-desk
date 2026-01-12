@@ -7,19 +7,18 @@ import { useRouter } from 'next/navigation'
 export default function SignOutPage() {
   const router = useRouter()
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
   useEffect(() => {
     const signOut = async () => {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
       await supabase.auth.signOut()
       router.push('/')
       router.refresh()
     }
     signOut()
-  }, [supabase.auth, router])
+  }, [router])
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
