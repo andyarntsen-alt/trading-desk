@@ -22,7 +22,22 @@ export async function POST() {
     }
   )
 
+  // Sign out from Supabase
   await supabase.auth.signOut()
 
-  return NextResponse.json({ success: true })
+  // Create response
+  const response = NextResponse.json({ success: true })
+  
+  // Manually clear all Supabase auth cookies
+  const allCookies = cookieStore.getAll()
+  for (const cookie of allCookies) {
+    if (cookie.name.includes('supabase') || cookie.name.includes('sb-')) {
+      response.cookies.set(cookie.name, '', {
+        expires: new Date(0),
+        path: '/',
+      })
+    }
+  }
+
+  return response
 }
