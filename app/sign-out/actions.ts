@@ -1,9 +1,10 @@
+'use server'
+
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { redirect } from 'next/navigation'
 
-export async function POST(request: NextRequest) {
+export async function signOut() {
   const cookieStore = await cookies()
   
   const supabase = createServerClient(
@@ -20,16 +21,13 @@ export async function POST(request: NextRequest) {
               cookieStore.set(name, value, options)
             })
           } catch {
-            // Ignore errors in Server Component
+            // Ignore
           }
         },
       },
     }
   )
 
-  // Sign out - this will clear the cookies via setAll
   await supabase.auth.signOut()
-
-  const origin = request.nextUrl.origin
-  return NextResponse.redirect(`${origin}/`, { status: 302 })
+  redirect('/')
 }
