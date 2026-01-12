@@ -1,22 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
 export default function SignOutPage() {
-  const [status, setStatus] = useState('Logger ut...')
+  const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
-    // Just redirect to server-side signout
-    // The server will clear cookies and redirect to home
-    window.location.href = '/api/auth/signout'
+    // Auto-submit the form on mount
+    formRef.current?.submit()
   }, [])
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-slate-400 text-sm">{status}</p>
-      </div>
+      <form ref={formRef} action="/auth/signout" method="POST">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-400 text-sm">Logger ut...</p>
+        </div>
+      </form>
     </div>
   )
 }
