@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     description: "Free trading journal with daily prep, checklist, analytics, and cloud sync. Built for disciplined traders.",
     images: [
       {
-        url: "https://trading-desk-ebon.vercel.app/brand/tradingdesk-lockup.png",
+        url: "https://trading-desk-ebon.vercel.app/brand/image.png",
         width: 1200,
         height: 630,
         alt: "Trading Desk",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Trading Desk – Free Trading Journal",
     description: "Free trading journal with daily prep, checklist, analytics, and cloud sync.",
-    images: ["https://trading-desk-ebon.vercel.app/brand/tradingdesk-lockup.png"],
+    images: ["https://trading-desk-ebon.vercel.app/brand/image.png"],
   },
 };
 
