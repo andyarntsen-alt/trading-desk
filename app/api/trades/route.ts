@@ -101,8 +101,12 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Error creating trade:', error)
-      return NextResponse.json({ error: 'Failed to create trade' }, { status: 500 })
+      console.error('Error creating trade:', error.message, error.details, error.hint)
+      return NextResponse.json({ 
+        error: 'Failed to create trade', 
+        details: error.message,
+        hint: error.hint 
+      }, { status: 500 })
     }
 
     // Update account balance if account is specified
