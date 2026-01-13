@@ -265,6 +265,35 @@ const SupabaseSync = {
   // DAILY ARCHIVES (Prep, Checklist, Review)
   // =====================================================
 
+  async loadAllDailyArchives() {
+    try {
+      const res = await fetch('/api/daily-archives');
+      if (!res.ok) {
+        if (res.status === 401) {
+          window.top.location.href = '/sign-in';
+          return [];
+        }
+        throw new Error('Failed to load daily archives');
+      }
+      const archives = await res.json();
+      // Transform from DB format to frontend format
+      return archives.map(a => ({
+        id: a.id,
+        supabaseId: a.id,
+        date: a.archive_date,
+        dailyPrep: a.prep_data,
+        checklist: a.checklist_data,
+        review: a.review_data,
+        screenshots: a.screenshots || [],
+        trades: [], // Trades are loaded separately
+        summary: a.prep_data?.summary || { totalTrades: 0, wins: 0, losses: 0, totalPnl: 0, winRate: 0 },
+      }));
+    } catch (e) {
+      console.error('Failed to load daily archives from Supabase:', e);
+      return [];
+    }
+  },
+
   async loadDailyArchive(date) {
     try {
       const res = await fetch(`/api/daily-archives?date=${date}`);
@@ -276,7 +305,19 @@ const SupabaseSync = {
         throw new Error('Failed to load daily archive');
       }
       const archives = await res.json();
-      return archives[0] || null;
+      if (!archives[0]) return null;
+      const a = archives[0];
+      return {
+        id: a.id,
+        supabaseId: a.id,
+        date: a.archive_date,
+        dailyPrep: a.prep_data,
+        checklist: a.checklist_data,
+        review: a.review_data,
+        screenshots: a.screenshots || [],
+        trades: [],
+        summary: a.prep_data?.summary || { totalTrades: 0, wins: 0, losses: 0, totalPnl: 0, winRate: 0 },
+      };
     } catch (e) {
       console.error('Failed to load daily archive from Supabase:', e);
       return null;
@@ -290,10 +331,10 @@ const SupabaseSync = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           archive_date: archive.date,
-          prep_data: archive.prep,
+          prep_data: archive.dailyPrep,
           checklist_data: archive.checklist,
           review_data: archive.review,
-          screenshots: archive.screenshots,
+          screenshots: archive.screenshots || [],
         }),
       });
       if (!res.ok) throw new Error('Failed to save daily archive');

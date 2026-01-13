@@ -1729,13 +1729,15 @@ function sanitizeHTML(str) {
     // Load data from Supabase in background
     if (window.SupabaseSync) {
       try {
-        const [accountsLoaded, tradesLoaded, playbookLoaded] = await Promise.all([
+        const [accountsLoaded, tradesLoaded, playbookLoaded, archivesLoaded, settingsLoaded] = await Promise.all([
           loadAccountsFromSupabase(),
           loadJournalFromSupabase(),
-          window.loadPlaybookFromSupabase ? window.loadPlaybookFromSupabase() : Promise.resolve(false)
+          window.loadPlaybookFromSupabase ? window.loadPlaybookFromSupabase() : Promise.resolve(false),
+          window.loadDailyArchivesFromSupabase ? window.loadDailyArchivesFromSupabase() : Promise.resolve(false),
+          window.loadUserSettingsFromSupabase ? window.loadUserSettingsFromSupabase() : Promise.resolve(false)
         ]);
         
-        if (accountsLoaded || tradesLoaded || playbookLoaded) {
+        if (accountsLoaded || tradesLoaded || playbookLoaded || archivesLoaded || settingsLoaded) {
           console.log('✅ Supabase sync complete - refreshing UI');
           // Refresh UI with loaded data
           setTimeout(() => {
@@ -1748,6 +1750,10 @@ function sanitizeHTML(str) {
             if (typeof renderAccounts === 'function') renderAccounts();
             if (typeof renderPlaybook === 'function') renderPlaybook();
             if (typeof populateSetupSelector === 'function') populateSetupSelector();
+            if (typeof renderCalendar === 'function') renderCalendar();
+            if (typeof renderVaultCalendar === 'function') renderVaultCalendar();
+            if (typeof renderGoals === 'function') renderGoals();
+            if (typeof renderDailyLossLimit === 'function') renderDailyLossLimit();
           }, 100);
         }
       } catch (e) {
@@ -4172,15 +4178,49 @@ function sanitizeHTML(str) {
       }
     }
   
-    // ------- Daily Archives -------
+    // ------- Daily Archives with Supabase -------
+    let _dailyArchivesCache = null;
+    let _dailyArchivesLoaded = false;
+
     function loadDailyArchives() {
+      // Return cache if available
+      if (_dailyArchivesCache !== null) {
+        return _dailyArchivesCache;
+      }
+      return [];
+    }
+
+    // Async function to load daily archives from Supabase
+    async function loadDailyArchivesFromSupabase() {
+      if (window.SupabaseSync && !_dailyArchivesLoaded) {
+        try {
+          const archives = await window.SupabaseSync.loadAllDailyArchives();
+          _dailyArchivesCache = Array.isArray(archives) ? archives : [];
+          _dailyArchivesLoaded = true;
+          console.log(`✓ Loaded ${_dailyArchivesCache.length} daily archives from Supabase`);
+          return true;
+        } catch (e) {
+          console.warn('Could not load daily archives from Supabase:', e);
+        }
+      }
+      _dailyArchivesLoaded = true;
+      if (_dailyArchivesCache === null) {
+        _dailyArchivesCache = [];
+      }
+      return false;
+    }
+
+    // Make available globally
+    window.loadDailyArchivesFromSupabase = loadDailyArchivesFromSupabase;
+
+    function loadDailyArchivesLegacy() {
       try {
         const data = localStorage.getItem(DAILY_ARCHIVES_KEY);
         if (!data) return [];
-        
+
         const archives = JSON.parse(data);
         const today = new Date().toISOString().slice(0, 10);
-        
+
         // Filter out future dates and validate archives
         return archives.filter(archive => {
           // Skip future dates
@@ -4219,10 +4259,28 @@ function sanitizeHTML(str) {
     }
   
     function saveDailyArchives(archives) {
-      try {
-        localStorage.setItem(DAILY_ARCHIVES_KEY, JSON.stringify(archives));
-      } catch (e) {
-        console.error("Failed to save daily archives:", e);
+      _dailyArchivesCache = archives;
+      
+      // Sync to Supabase in background (uses upsert, so works for both new and updates)
+      if (window.SupabaseSync) {
+        archives.forEach(async (archive) => {
+          if (archive._dirty || !archive.supabaseId) {
+            if (archive._syncing) return;
+            archive._syncing = true;
+            try {
+              const saved = await window.SupabaseSync.saveDailyArchive(archive);
+              if (saved && saved.id) {
+                archive.supabaseId = saved.id;
+                archive._dirty = false;
+                archive._syncing = false;
+                console.log(`✓ Daily archive synced to Supabase: ${archive.date}`);
+              }
+            } catch (e) {
+              archive._syncing = false;
+              console.warn('Failed to sync daily archive to Supabase:', e);
+            }
+          }
+        });
       }
     }
   
@@ -4315,6 +4373,7 @@ function sanitizeHTML(str) {
       }
       
       // Save updated archives
+      archive._dirty = true; // Mark for Supabase sync
       const index = archives.findIndex(a => a.date === dateStr);
       if (index !== -1) {
         archives[index] = archive;
@@ -8753,20 +8812,64 @@ function sanitizeHTML(str) {
     // Initialize on load
     initReports();
   
+    // ------- User Settings with Supabase -------
+    let _userSettingsCache = null;
+    let _userSettingsLoaded = false;
+    let _settingsSyncTimeout = null;
+
+    async function loadUserSettingsFromSupabase() {
+      if (window.SupabaseSync && !_userSettingsLoaded) {
+        try {
+          const settings = await window.SupabaseSync.loadSettings();
+          if (settings) {
+            _userSettingsCache = settings;
+            _userSettingsLoaded = true;
+            console.log('✓ Loaded user settings from Supabase');
+            return true;
+          }
+        } catch (e) {
+          console.warn('Could not load settings from Supabase:', e);
+        }
+      }
+      _userSettingsLoaded = true;
+      if (_userSettingsCache === null) {
+        _userSettingsCache = {};
+      }
+      return false;
+    }
+
+    function syncUserSettingsToSupabase() {
+      if (!window.SupabaseSync || !_userSettingsCache) return;
+      
+      // Debounce sync
+      clearTimeout(_settingsSyncTimeout);
+      _settingsSyncTimeout = setTimeout(async () => {
+        try {
+          await window.SupabaseSync.saveSettings(_userSettingsCache);
+          console.log('✓ Settings synced to Supabase');
+        } catch (e) {
+          console.warn('Failed to sync settings to Supabase:', e);
+        }
+      }, 1000);
+    }
+
+    window.loadUserSettingsFromSupabase = loadUserSettingsFromSupabase;
+
     // ------- Goals & Targets -------
     const GOALS_STORAGE_KEY = "tradingdesk:goals";
-  
+
     function loadGoals() {
-      try {
-        return JSON.parse(localStorage.getItem(GOALS_STORAGE_KEY) || "{}");
-      } catch (e) {
-        console.error("Failed to parse goals from localStorage", e);
-        return {};
+      // Return from Supabase cache if available
+      if (_userSettingsCache && _userSettingsCache.goals) {
+        return _userSettingsCache.goals;
       }
+      return {};
     }
-  
+
     function saveGoals(goals) {
-      localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goals));
+      if (!_userSettingsCache) _userSettingsCache = {};
+      _userSettingsCache.goals = goals;
+      syncUserSettingsToSupabase();
     }
   
     function calculateGoalProgress(goals) {
@@ -9415,17 +9518,19 @@ function sanitizeHTML(str) {
   
     // Daily Loss Limit Tracker
     const DAILY_LOSS_LIMIT_KEY = "tradingdesk:daily-loss-limit";
-  
+
     function loadDailyLossLimit() {
-      try {
-        return JSON.parse(localStorage.getItem(DAILY_LOSS_LIMIT_KEY) || "{}");
-      } catch (e) {
-        return {};
+      // Return from Supabase cache if available
+      if (_userSettingsCache && _userSettingsCache.daily_loss_limit) {
+        return _userSettingsCache.daily_loss_limit;
       }
+      return {};
     }
-  
+
     function saveDailyLossLimit(settings) {
-      localStorage.setItem(DAILY_LOSS_LIMIT_KEY, JSON.stringify(settings));
+      if (!_userSettingsCache) _userSettingsCache = {};
+      _userSettingsCache.daily_loss_limit = settings;
+      syncUserSettingsToSupabase();
     }
   
     function getTodayPnl() {
@@ -9723,17 +9828,19 @@ function sanitizeHTML(str) {
     
     // Tilt Detection
     const TILT_SETTINGS_KEY = "tradingdesk:tilt-settings";
-    
+
     function loadTiltSettings() {
-      try {
-        return JSON.parse(localStorage.getItem(TILT_SETTINGS_KEY) || '{}');
-      } catch (e) {
-        return {};
+      // Return from Supabase cache if available
+      if (_userSettingsCache && _userSettingsCache.tilt_settings) {
+        return _userSettingsCache.tilt_settings;
       }
+      return {};
     }
-    
+
     function saveTiltSettings(settings) {
-      localStorage.setItem(TILT_SETTINGS_KEY, JSON.stringify(settings));
+      if (!_userSettingsCache) _userSettingsCache = {};
+      _userSettingsCache.tilt_settings = settings;
+      syncUserSettingsToSupabase();
     }
     
     function checkForTilt() {
