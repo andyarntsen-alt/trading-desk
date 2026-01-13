@@ -2407,7 +2407,7 @@ function sanitizeHTML(str) {
             directionSection.classList.remove("ring-2", "ring-rose-500", "ring-opacity-50", "rounded-lg");
           }, 3000);
         }
-        alert("Velg retning (Long eller Short) først");
+        alert("Select direction (Long or Short) first");
         return;
       }
   
@@ -7166,7 +7166,7 @@ function sanitizeHTML(str) {
       const globalFilter = getGlobalFilter();
       
       // Build options grouped by category
-      let html = '<option value="">Velg konto ⚠️</option>';
+      let html = '<option value="">Select account ⚠️</option>';
       
       const categories = {
         crypto: 'Crypto',
@@ -7841,10 +7841,10 @@ function sanitizeHTML(str) {
           // Warn if no account is selected
           if (!selectedAccountId) {
             const proceed = confirm(
-              'Ingen konto valgt!\n\n' +
-              'Trades uten konto vil bare vises når "All Accounts" er valgt.\n' +
-              'De vil IKKE vises i Analysis eller andre seksjoner når en spesifikk konto er filtrert.\n\n' +
-              'Vil du fortsette uten å velge en konto?'
+              'No account selected!\n\n' +
+              'Trades without an account will only show when "All Accounts" is selected.\n' +
+              'They will NOT appear in Analysis or other sections when a specific account is filtered.\n\n' +
+              'Do you want to continue without selecting an account?'
             );
             if (!proceed) return;
           }
