@@ -1723,24 +1723,23 @@ function sanitizeHTML(str) {
   }
   
   document.addEventListener("DOMContentLoaded", async () => {
-    // ------- Initialize Supabase Sync -------
-    console.log('🔄 Initializing Supabase sync...');
-    
-    // Load data from Supabase in background
-    if (window.SupabaseSync) {
-      try {
-        const [accountsLoaded, tradesLoaded, playbookLoaded, archivesLoaded, settingsLoaded] = await Promise.all([
-          loadAccountsFromSupabase(),
-          loadJournalFromSupabase(),
-          window.loadPlaybookFromSupabase ? window.loadPlaybookFromSupabase() : Promise.resolve(false),
-          window.loadDailyArchivesFromSupabase ? window.loadDailyArchivesFromSupabase() : Promise.resolve(false),
-          window.loadUserSettingsFromSupabase ? window.loadUserSettingsFromSupabase() : Promise.resolve(false)
-        ]);
-        
-        if (accountsLoaded || tradesLoaded || playbookLoaded || archivesLoaded || settingsLoaded) {
-          console.log('✅ Supabase sync complete - refreshing UI');
-          // Refresh UI with loaded data
-          setTimeout(() => {
+    // ------- Initialize Supabase Sync (delayed to ensure all loaders are defined) -------
+    async function initSupabaseSync() {
+      console.log('🔄 Initializing Supabase sync...');
+      
+      if (window.SupabaseSync) {
+        try {
+          const [accountsLoaded, tradesLoaded, playbookLoaded, archivesLoaded, settingsLoaded] = await Promise.all([
+            loadAccountsFromSupabase(),
+            loadJournalFromSupabase(),
+            window.loadPlaybookFromSupabase ? window.loadPlaybookFromSupabase() : Promise.resolve(false),
+            window.loadDailyArchivesFromSupabase ? window.loadDailyArchivesFromSupabase() : Promise.resolve(false),
+            window.loadUserSettingsFromSupabase ? window.loadUserSettingsFromSupabase() : Promise.resolve(false)
+          ]);
+          
+          if (accountsLoaded || tradesLoaded || playbookLoaded || archivesLoaded || settingsLoaded) {
+            console.log('✅ Supabase sync complete - refreshing UI');
+            // Refresh UI with loaded data
             const journal = loadJournal();
             if (typeof renderJournal === 'function') renderJournal(journal);
             if (typeof renderJournalTable === 'function') renderJournalTable();
@@ -1754,12 +1753,15 @@ function sanitizeHTML(str) {
             if (typeof renderVaultCalendar === 'function') renderVaultCalendar();
             if (typeof renderGoals === 'function') renderGoals();
             if (typeof renderDailyLossLimit === 'function') renderDailyLossLimit();
-          }, 100);
+          }
+        } catch (e) {
+          console.warn('Supabase sync failed:', e);
         }
-      } catch (e) {
-        console.warn('Supabase sync failed:', e);
       }
     }
+    
+    // Delay sync to ensure all loader functions are defined
+    setTimeout(initSupabaseSync, 200);
     
     // ------- Section navigation (sidebar -> "pages") -------
     const sectionLinks = document.querySelectorAll("[data-section-nav]");
