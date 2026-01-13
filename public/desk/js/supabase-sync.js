@@ -332,9 +332,15 @@ const SupabaseSync = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: setup.name,
-          description: setup.description,
-          rules: setup.rules || [],
-          screenshot_url: setup.screenshot,
+          description: setup.description || '',
+          rules: {
+            entry: setup.rules?.entry || '',
+            exit: setup.rules?.exit || '',
+            avoid: setup.rules?.avoid || '',
+            tags: setup.tags || [],
+            instruments: setup.instruments || [],
+          },
+          screenshot_url: setup.screenshot || null,
         }),
       });
       if (!res.ok) throw new Error('Failed to save playbook setup');

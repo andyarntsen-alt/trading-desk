@@ -1729,12 +1729,13 @@ function sanitizeHTML(str) {
     // Load data from Supabase in background
     if (window.SupabaseSync) {
       try {
-        const [accountsLoaded, tradesLoaded] = await Promise.all([
+        const [accountsLoaded, tradesLoaded, playbookLoaded] = await Promise.all([
           loadAccountsFromSupabase(),
-          loadJournalFromSupabase()
+          loadJournalFromSupabase(),
+          window.loadPlaybookFromSupabase ? window.loadPlaybookFromSupabase() : Promise.resolve(false)
         ]);
         
-        if (accountsLoaded || tradesLoaded) {
+        if (accountsLoaded || tradesLoaded || playbookLoaded) {
           console.log('✅ Supabase sync complete - refreshing UI');
           // Refresh UI with loaded data
           setTimeout(() => {
@@ -1745,6 +1746,8 @@ function sanitizeHTML(str) {
             if (typeof renderAccountManager === 'function') renderAccountManager();
             if (typeof renderFinanceDashboard === 'function') renderFinanceDashboard();
             if (typeof renderAccounts === 'function') renderAccounts();
+            if (typeof renderPlaybook === 'function') renderPlaybook();
+            if (typeof populateSetupSelector === 'function') populateSetupSelector();
           }, 100);
         }
       } catch (e) {
@@ -5600,21 +5603,81 @@ function sanitizeHTML(str) {
       renderStrategyPerformance();
     };
   
-    // ------- Playbook System -------
+    // ------- Playbook System with Supabase -------
     const PLAYBOOK_STORAGE_KEY = "tradingdesk:playbook";
-    
+    let _playbookCache = null;
+    let _playbookLoaded = false;
+
     function loadPlaybook() {
-      try {
-        return JSON.parse(localStorage.getItem(PLAYBOOK_STORAGE_KEY) || "[]");
-      } catch (e) {
-        console.error("Failed to load playbook:", e);
-        return [];
+      // Return cache if available
+      if (_playbookCache !== null) {
+        return _playbookCache;
+      }
+      return [];
+    }
+
+    function savePlaybook(setups) {
+      _playbookCache = setups;
+      
+      // Sync new setups to Supabase in background
+      if (window.SupabaseSync) {
+        setups.forEach(async (setup) => {
+          if (!setup.supabaseId && !setup._syncing) {
+            setup._syncing = true;
+            try {
+              const saved = await window.SupabaseSync.savePlaybookSetup(setup);
+              if (saved && saved.id) {
+                setup.supabaseId = saved.id;
+                setup._syncing = false;
+                console.log(`✓ Playbook setup synced to Supabase: ${setup.name}`);
+              }
+            } catch (e) {
+              setup._syncing = false;
+              console.warn('Failed to sync playbook setup to Supabase:', e);
+            }
+          }
+        });
       }
     }
-    
-    function savePlaybook(setups) {
-      localStorage.setItem(PLAYBOOK_STORAGE_KEY, JSON.stringify(setups));
+
+    // Async function to load playbook from Supabase (called on init)
+    async function loadPlaybookFromSupabase() {
+      if (window.SupabaseSync && !_playbookLoaded) {
+        try {
+          const setups = await window.SupabaseSync.loadPlaybook();
+          // Transform from DB format to frontend format
+          _playbookCache = Array.isArray(setups) ? setups.map(s => ({
+            id: s.id,
+            supabaseId: s.id,
+            name: s.name,
+            description: s.description,
+            tags: s.rules?.tags || [],
+            rules: {
+              entry: s.rules?.entry || '',
+              exit: s.rules?.exit || '',
+              avoid: s.rules?.avoid || ''
+            },
+            instruments: s.rules?.instruments || [],
+            screenshot: s.screenshot_url,
+            createdAt: s.created_at,
+            updatedAt: s.updated_at,
+          })) : [];
+          _playbookLoaded = true;
+          console.log(`✓ Loaded ${_playbookCache.length} playbook setups from Supabase`);
+          return true;
+        } catch (e) {
+          console.warn('Could not load playbook from Supabase:', e);
+        }
+      }
+      _playbookLoaded = true;
+      if (_playbookCache === null) {
+        _playbookCache = [];
+      }
+      return false;
     }
+    
+    // Make loadPlaybookFromSupabase available globally
+    window.loadPlaybookFromSupabase = loadPlaybookFromSupabase;
     
     function calculateSetupStats(setupId, useFiltered = false) {
       const journal = useFiltered ? getFilteredJournal() : loadJournal();
