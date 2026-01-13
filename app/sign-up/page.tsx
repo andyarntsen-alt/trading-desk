@@ -10,18 +10,25 @@ export default function SignUpPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    try {
-      const supabase = createClient()
-      supabase.auth.getSession().then(({ data }) => {
+    const checkSession = async () => {
+      try {
+        const supabase = createClient()
+        const { data } = await supabase.auth.getSession()
+        
         if (data.session) {
           window.location.href = '/desk'
+        } else {
+          setReady(true)
         }
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Kunne ikke koble til Supabase')
+      } catch {
+        setReady(true)
+      }
     }
+    
+    checkSession()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,25 +50,39 @@ export default function SignUpPage() {
         setSuccess(true)
         setLoading(false)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registrering feilet')
+    } catch {
+      setError('Something went wrong. Please try again.')
       setLoading(false)
     }
   }
 
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
   if (success) {
     return (
-      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
-        <div className="text-center bg-[#0a0a0a] border border-[#1f1f1f] rounded-2xl p-8 shadow-2xl shadow-black/40">
-          <h1 className="text-2xl font-semibold mb-4">Sjekk e-posten din</h1>
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm text-center bg-[#0a0a0a] border border-[#1f1f1f] rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/40">
+          <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-semibold mb-4">Check your email</h1>
           <p className="text-slate-400 mb-6">
-            Vi har sendt en bekreftelseslenke til {email}
+            We sent a confirmation link to<br />
+            <span className="text-white font-medium">{email}</span>
           </p>
           <Link
             href="/sign-in"
-            className="text-white font-medium hover:text-emerald-300 transition-colors"
+            className="inline-block px-6 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-colors"
           >
-            Tilbake til innlogging
+            Back to sign in
           </Link>
         </div>
       </div>
@@ -69,11 +90,17 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
-      <div className="w-full max-w-sm bg-[#0a0a0a] border border-[#1f1f1f] rounded-2xl p-8 shadow-2xl shadow-black/40">
-        <h1 className="text-2xl font-semibold text-center mb-2">Opprett konto</h1>
+    <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-sm bg-[#0a0a0a] border border-[#1f1f1f] rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/40">
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <img src="/brand/tradingdesk-icon-64.png" alt="Trading Desk" className="w-8 h-8 rounded-lg" />
+          <span className="text-lg font-semibold">Trading Desk</span>
+          <span className="px-1.5 py-0.5 text-[9px] font-medium bg-emerald-500/20 text-emerald-400 rounded">BETA</span>
+        </div>
+        
+        <h1 className="text-2xl font-semibold text-center mb-2">Create account</h1>
         <p className="text-center text-sm text-slate-400 mb-8">
-          Get access to Trading Desk
+          Start your trading journal
         </p>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,7 +112,7 @@ export default function SignUpPage() {
           
           <input
             type="email"
-            placeholder="E-post"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -94,7 +121,7 @@ export default function SignUpPage() {
           
           <input
             type="password"
-            placeholder="Passord (minst 6 tegn)"
+            placeholder="Password (min 6 characters)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -107,14 +134,14 @@ export default function SignUpPage() {
             disabled={loading}
             className="w-full py-3 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-60"
           >
-            {loading ? 'Oppretter...' : 'Opprett konto'}
+            {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
         
         <p className="text-center mt-6 text-sm text-slate-400">
-          Har du konto?{' '}
+          Already have an account?{' '}
           <Link href="/sign-in" className="text-white font-medium hover:text-emerald-300 transition-colors">
-            Logg inn
+            Sign in
           </Link>
         </p>
       </div>

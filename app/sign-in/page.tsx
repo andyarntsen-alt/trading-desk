@@ -9,77 +9,76 @@ export default function SignInPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [debugInfo, setDebugInfo] = useState<string | null>(null)
+  const [ready, setReady] = useState(false)
 
-  // Test Supabase connection on load
   useEffect(() => {
-    const testConnection = async () => {
+    const checkSession = async () => {
       try {
         const supabase = createClient()
+        const { data } = await supabase.auth.getSession()
         
-        // Test 1: Check if client was created
-        setDebugInfo('Supabase client opprettet...')
-        
-        // Test 2: Try to get session
-        const { data, error } = await supabase.auth.getSession()
-        
-        if (error) {
-          setDebugInfo(`Session error: ${error.message}`)
-        } else if (data.session) {
+        if (data.session) {
           window.location.href = '/desk'
         } else {
-          setDebugInfo('Klar til innlogging')
+          setReady(true)
         }
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Ukjent feil'
-        setDebugInfo(`Connection error: ${errorMsg}`)
-        setError(errorMsg)
+      } catch {
+        setReady(true)
       }
     }
     
-    testConnection()
+    checkSession()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
-    setDebugInfo('Logger inn...')
 
     try {
       const supabase = createClient()
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) {
-        console.error('Login error:', error)
-        setError(`${error.message} (${error.status || 'no status'})`)
-        setDebugInfo(`Error code: ${error.status}, name: ${error.name}`)
+        if (error.message === 'Invalid login credentials') {
+          setError('Invalid email or password')
+        } else {
+          setError(error.message)
+        }
         setLoading(false)
       } else {
-        setDebugInfo('Innlogging vellykket, omdirigerer...')
         window.location.href = '/desk'
       }
-    } catch (err) {
-      console.error('Login exception:', err)
-      const errorMsg = err instanceof Error 
-        ? `${err.name}: ${err.message}` 
-        : 'Ukjent feil'
-      setError(errorMsg)
-      setDebugInfo(`Exception type: ${err?.constructor?.name}`)
+    } catch {
+      setError('Something went wrong. Please try again.')
       setLoading(false)
     }
   }
 
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
-      <div className="w-full max-w-sm bg-[#0a0a0a] border border-[#1f1f1f] rounded-2xl p-8 shadow-2xl shadow-black/40">
-        <h1 className="text-2xl font-semibold text-center mb-2">Logg inn</h1>
+    <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-sm bg-[#0a0a0a] border border-[#1f1f1f] rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/40">
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <img src="/brand/tradingdesk-icon-64.png" alt="Trading Desk" className="w-8 h-8 rounded-lg" />
+          <span className="text-lg font-semibold">Trading Desk</span>
+          <span className="px-1.5 py-0.5 text-[9px] font-medium bg-emerald-500/20 text-emerald-400 rounded">BETA</span>
+        </div>
+        
+        <h1 className="text-2xl font-semibold text-center mb-2">Sign in</h1>
         <p className="text-center text-sm text-slate-400 mb-8">
-          Tilgang til Trading Desk
+          Welcome back
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -91,7 +90,7 @@ export default function SignInPage() {
 
           <input
             type="email"
-            placeholder="E-post"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -100,7 +99,7 @@ export default function SignInPage() {
 
           <input
             type="password"
-            placeholder="Passord"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -112,23 +111,16 @@ export default function SignInPage() {
             disabled={loading}
             className="w-full py-3 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-60"
           >
-            {loading ? 'Logger inn...' : 'Logg inn'}
+            {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
         <p className="text-center mt-6 text-sm text-slate-400">
-          Ingen konto?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/sign-up" className="text-white font-medium hover:text-emerald-300 transition-colors">
-            Registrer deg
+            Sign up
           </Link>
         </p>
-
-        {/* Debug info */}
-        {debugInfo && (
-          <p className="text-center mt-4 text-xs text-slate-500 font-mono">
-            {debugInfo}
-          </p>
-        )}
       </div>
     </div>
   )
