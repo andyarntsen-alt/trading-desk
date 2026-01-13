@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
 // No authentication required - open access
-export async function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   return NextResponse.next()
 }
 
