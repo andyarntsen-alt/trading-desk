@@ -11,12 +11,16 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        window.location.href = '/desk'
-      }
-    })
+    try {
+      const supabase = createClient()
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) {
+          window.location.href = '/desk'
+        }
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kunne ikke koble til Supabase')
+    }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,17 +28,22 @@ export default function SignInPage() {
     setError('')
     setLoading(true)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-    if (error) {
-      setError(error.message)
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+      } else {
+        window.location.href = '/desk'
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Innlogging feilet')
       setLoading(false)
-    } else {
-      window.location.href = '/desk'
     }
   }
 

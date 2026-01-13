@@ -12,12 +12,16 @@ export default function SignUpPage() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        window.location.href = '/desk'
-      }
-    })
+    try {
+      const supabase = createClient()
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) {
+          window.location.href = '/desk'
+        }
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kunne ikke koble til Supabase')
+    }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,17 +29,22 @@ export default function SignUpPage() {
     setError('')
     setLoading(true)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      })
 
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-    } else {
-      setSuccess(true)
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+      } else {
+        setSuccess(true)
+        setLoading(false)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registrering feilet')
       setLoading(false)
     }
   }
