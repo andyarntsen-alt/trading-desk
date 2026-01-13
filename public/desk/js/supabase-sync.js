@@ -21,8 +21,9 @@ const SupabaseSync = {
       const res = await fetch('/api/trades');
       if (!res.ok) {
         if (res.status === 401) {
-          console.warn('Not authenticated, using localStorage fallback');
-          return JSON.parse(localStorage.getItem('tradingdesk:journals') || '[]');
+          console.warn('Not authenticated, redirecting to sign-in');
+          window.top.location.href = '/sign-in';
+          return [];
         }
         throw new Error('Failed to load trades');
       }
@@ -47,7 +48,7 @@ const SupabaseSync = {
       return this._cache.trades;
     } catch (e) {
       console.error('Failed to load trades from Supabase:', e);
-      return JSON.parse(localStorage.getItem('tradingdesk:journals') || '[]');
+      return [];
     }
   },
 
@@ -78,12 +79,7 @@ const SupabaseSync = {
       return saved;
     } catch (e) {
       console.error('Failed to save trade to Supabase:', e);
-      // Fallback to localStorage
-      const trades = JSON.parse(localStorage.getItem('tradingdesk:journals') || '[]');
-      trade.id = trade.id || crypto.randomUUID();
-      trades.push(trade);
-      localStorage.setItem('tradingdesk:journals', JSON.stringify(trades));
-      return trade;
+      return null;
     }
   },
 
@@ -137,7 +133,9 @@ const SupabaseSync = {
       const res = await fetch('/api/accounts');
       if (!res.ok) {
         if (res.status === 401) {
-          return JSON.parse(localStorage.getItem('tradingdesk:accounts') || '[]');
+          console.warn('Not authenticated, redirecting to sign-in');
+          window.top.location.href = '/sign-in';
+          return [];
         }
         throw new Error('Failed to load accounts');
       }
@@ -152,7 +150,7 @@ const SupabaseSync = {
       return this._cache.accounts;
     } catch (e) {
       console.error('Failed to load accounts from Supabase:', e);
-      return JSON.parse(localStorage.getItem('tradingdesk:accounts') || '[]');
+      return [];
     }
   },
 
@@ -217,7 +215,10 @@ const SupabaseSync = {
     try {
       const res = await fetch('/api/settings');
       if (!res.ok) {
-        if (res.status === 401) return null;
+        if (res.status === 401) {
+          window.top.location.href = '/sign-in';
+          return null;
+        }
         throw new Error('Failed to load settings');
       }
       this._cache.settings = await res.json();
@@ -251,7 +252,13 @@ const SupabaseSync = {
   async loadDailyArchive(date) {
     try {
       const res = await fetch(`/api/daily-archives?date=${date}`);
-      if (!res.ok) throw new Error('Failed to load daily archive');
+      if (!res.ok) {
+        if (res.status === 401) {
+          window.top.location.href = '/sign-in';
+          return null;
+        }
+        throw new Error('Failed to load daily archive');
+      }
       const archives = await res.json();
       return archives[0] || null;
     } catch (e) {
@@ -288,7 +295,13 @@ const SupabaseSync = {
   async loadPlaybook() {
     try {
       const res = await fetch('/api/playbook');
-      if (!res.ok) throw new Error('Failed to load playbook');
+      if (!res.ok) {
+        if (res.status === 401) {
+          window.top.location.href = '/sign-in';
+          return [];
+        }
+        throw new Error('Failed to load playbook');
+      }
       return await res.json();
     } catch (e) {
       console.error('Failed to load playbook from Supabase:', e);

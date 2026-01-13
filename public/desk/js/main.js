@@ -1418,7 +1418,7 @@ function sanitizeHTML(str) {
   // Initialize symbols on load
   initializeSymbols();
   
-  // ------- Journal with Supabase + localStorage fallback -------
+  // ------- Journal with Supabase -------
   const JOURNAL_STORAGE_KEY = "tradingdesk:journals";
   let _journalCache = null;
   let _journalLoaded = false;
@@ -1428,20 +1428,11 @@ function sanitizeHTML(str) {
     if (_journalCache !== null) {
       return _journalCache;
     }
-    // Fall back to localStorage for immediate load
-    try {
-      _journalCache = JSON.parse(localStorage.getItem(JOURNAL_STORAGE_KEY) || "[]");
-      return _journalCache;
-    } catch (e) {
-      console.error("Failed to parse journal from localStorage", e);
-      return [];
-    }
+    return [];
   }
   
   function saveJournal(list) {
     _journalCache = list;
-    // Save to localStorage immediately
-    localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(list));
     
     // Sync new trades to Supabase in background
     if (window.SupabaseSync) {
@@ -1454,8 +1445,6 @@ function sanitizeHTML(str) {
             if (saved && saved.id) {
               trade.supabaseId = saved.id;
               trade._syncing = false;
-              // Update localStorage with supabaseId
-              localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(_journalCache));
               console.log(`✓ Trade synced to Supabase: ${trade.symbol}`);
             }
           } catch (e) {
@@ -1472,22 +1461,22 @@ function sanitizeHTML(str) {
     if (window.SupabaseSync && !_journalLoaded) {
       try {
         const trades = await window.SupabaseSync.loadTrades();
-        if (trades && trades.length > 0) {
-          _journalCache = trades;
-          _journalLoaded = true;
-          // Also update localStorage as backup
-          localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(trades));
-          console.log(`✓ Loaded ${trades.length} trades from Supabase`);
-          return true;
-        }
+        _journalCache = Array.isArray(trades) ? trades : [];
+        _journalLoaded = true;
+        console.log(`✓ Loaded ${_journalCache.length} trades from Supabase`);
+        return true;
       } catch (e) {
-        console.warn('Could not load from Supabase, using localStorage:', e);
+        console.warn('Could not load trades from Supabase:', e);
       }
+    }
+    _journalLoaded = true;
+    if (_journalCache === null) {
+      _journalCache = [];
     }
     return false;
   }
   
-  // ------- Accounts Storage with Supabase + localStorage fallback -------
+  // ------- Accounts Storage with Supabase -------
   const ACCOUNTS_STORAGE_KEY = "tradingdesk:accounts";
   let _accountsCache = null;
   let _accountsLoaded = false;
@@ -1497,20 +1486,11 @@ function sanitizeHTML(str) {
     if (_accountsCache !== null) {
       return _accountsCache;
     }
-    // Fall back to localStorage for immediate load
-    try {
-      _accountsCache = JSON.parse(localStorage.getItem(ACCOUNTS_STORAGE_KEY) || "[]");
-      return _accountsCache;
-    } catch (e) {
-      console.error("Failed to parse accounts from localStorage", e);
-      return [];
-    }
+    return [];
   }
   
   function saveAccounts(accounts) {
     _accountsCache = accounts;
-    // Save to localStorage immediately
-    localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
     
     // Sync new accounts to Supabase in background
     if (window.SupabaseSync) {
@@ -1522,7 +1502,6 @@ function sanitizeHTML(str) {
             if (saved && saved.id) {
               account.supabaseId = saved.id;
               account._syncing = false;
-              localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(_accountsCache));
               console.log(`✓ Account synced to Supabase: ${account.name}`);
             }
           } catch (e) {
@@ -1539,16 +1518,17 @@ function sanitizeHTML(str) {
     if (window.SupabaseSync && !_accountsLoaded) {
       try {
         const accounts = await window.SupabaseSync.loadAccounts();
-        if (accounts && accounts.length > 0) {
-          _accountsCache = accounts;
-          _accountsLoaded = true;
-          localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
-          console.log(`✓ Loaded ${accounts.length} accounts from Supabase`);
-          return true;
-        }
+        _accountsCache = Array.isArray(accounts) ? accounts : [];
+        _accountsLoaded = true;
+        console.log(`✓ Loaded ${_accountsCache.length} accounts from Supabase`);
+        return true;
       } catch (e) {
-        console.warn('Could not load accounts from Supabase, using localStorage:', e);
+        console.warn('Could not load accounts from Supabase:', e);
       }
+    }
+    _accountsLoaded = true;
+    if (_accountsCache === null) {
+      _accountsCache = [];
     }
     return false;
   }
@@ -1611,12 +1591,7 @@ function sanitizeHTML(str) {
     emptyEl.style.display = "none";
   
     // Load accounts to get account names
-    let accounts = [];
-    try {
-      accounts = JSON.parse(localStorage.getItem("tradingdesk:accounts") || "[]");
-    } catch (e) {
-      // Ignore
-    }
+    const accounts = loadAccounts();
   
     list.forEach((item, idx) => {
       const row = document.createElement("div");
@@ -1770,7 +1745,7 @@ function sanitizeHTML(str) {
           }, 100);
         }
       } catch (e) {
-        console.warn('Supabase sync failed, using localStorage:', e);
+        console.warn('Supabase sync failed:', e);
       }
     }
     
