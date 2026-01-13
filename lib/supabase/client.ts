@@ -5,12 +5,6 @@ export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // Debug logging
-  console.log('[Supabase Client] URL exists:', !!supabaseUrl)
-  console.log('[Supabase Client] Key exists:', !!supabaseAnonKey)
-  console.log('[Supabase Client] Key starts with eyJ:', supabaseAnonKey?.startsWith('eyJ'))
-  console.log('[Supabase Client] Key length:', supabaseAnonKey?.length)
-
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error(
       `Supabase config mangler: URL=${!!supabaseUrl}, KEY=${!!supabaseAnonKey}`
