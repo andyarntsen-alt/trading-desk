@@ -35,18 +35,18 @@ export const metadata: Metadata = {
     description: "Free trading journal with daily prep, checklist, analytics, and cloud sync. Built for disciplined traders.",
     images: [
       {
-        url: "https://trading-desk-ebon.vercel.app/brand/tradingdesk-icon-512.png",
-        width: 512,
-        height: 512,
+        url: "https://trading-desk-ebon.vercel.app/brand/tradingdesk-lockup.png",
+        width: 1200,
+        height: 630,
         alt: "Trading Desk",
       },
     ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Trading Desk – Free Trading Journal",
     description: "Free trading journal with daily prep, checklist, analytics, and cloud sync.",
-    images: ["https://trading-desk-ebon.vercel.app/brand/tradingdesk-icon-512.png"],
+    images: ["https://trading-desk-ebon.vercel.app/brand/tradingdesk-lockup.png"],
   },
 };
 
