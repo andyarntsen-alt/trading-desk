@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>OG Image Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Inter', system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #333;
+      padding: 20px;
+    }
+    .og-image {
+      width: 1200px;
+      height: 630px;
+      background: linear-gradient(135deg, #0a0a0a 0%, #111 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .gradient-overlay {
+      position: absolute;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 80% 50% at 20% 20%, rgba(16, 185, 129, 0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59, 130, 246, 0.1), transparent);
+    }
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 80px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .logo {
+      width: 100px;
+      height: 100px;
+      background: #1a1a1a;
+      border: 2px solid #2a2a2a;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 56px;
+      font-weight: 700;
+      color: #d4af37;
+    }
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .title {
+      font-size: 56px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -1px;
+    }
+    .beta {
+      padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #10b981;
+    }
+    .subtitle {
+      font-size: 28px;
+      color: #94a3b8;
+      margin-bottom: 40px;
+    }
+    .features {
+      display: flex;
+      gap: 32px;
+    }
+    .feature {
+      font-size: 18px;
+      color: #64748b;
+    }
+    .feature span {
+      color: #10b981;
+      margin-right: 8px;
+    }
+    .accent-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: linear-gradient(90deg, #10b981, #3b82f6);
+    }
+    .instructions {
+      margin-top: 20px;
+      color: white;
+      text-align: center;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="og-image" id="og">
+      <div class="gradient-overlay"></div>
+      <div class="content">
+        <div class="header">
+          <div class="logo">T</div>
+          <div>
+            <div class="title-group">
+              <div class="title">Trading Desk</div>
+              <div class="beta">BETA</div>
+            </div>
+          </div>
+        </div>
+        <div class="subtitle">Free trading journal with analytics & cloud sync</div>
+        <div class="features">
+          <div class="feature"><span>✓</span> Daily Prep</div>
+          <div class="feature"><span>✓</span> Trade Checklist</div>
+          <div class="feature"><span>✓</span> Analytics & Heatmaps</div>
+          <div class="feature"><span>✓</span> Cloud Sync</div>
+        </div>
+      </div>
+      <div class="accent-bar"></div>
+    </div>
+    <div class="instructions">
+      <p>Åpne denne siden i Chrome → Høyreklikk → "Inspect" → Velg .og-image elementet</p>
+      <p>→ Høyreklikk → "Capture node screenshot" → Lagre som <strong>og-image.png</strong></p>
+      <p>→ Legg filen i /public/brand/</p>
+    </div>
+  </div>
+</body>
+</html>
