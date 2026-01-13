@@ -1760,8 +1760,8 @@ function sanitizeHTML(str) {
       }
     }
     
-    // Delay sync to ensure all loader functions are defined
-    setTimeout(initSupabaseSync, 200);
+    // Delay sync to ensure all loader functions are defined (500ms for safety)
+    setTimeout(initSupabaseSync, 500);
     
     // ------- Section navigation (sidebar -> "pages") -------
     const sectionLinks = document.querySelectorAll("[data-section-nav]");

@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS playbook_setups (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   description TEXT,
-  rules TEXT[],
+  rules JSONB,
   screenshot_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
