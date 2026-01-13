@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trading Desk – Day Trading Journal",
-  description: "Your complete trading journal – Daily prep, checklist, Monte Carlo and analysis in one place",
+  title: "Trading Desk – Structured Trading Journal",
+  description: "Structured trading journal with daily prep, checklist, review, and performance analytics.",
   icons: {
     icon: [
       { url: "/brand/tradingdesk-icon-32.png", sizes: "32x32", type: "image/png" },
@@ -26,12 +26,6 @@ export const metadata: Metadata = {
       { url: "/brand/tradingdesk-icon-167.png", sizes: "167x167", type: "image/png" },
     ],
     shortcut: "/brand/favicon.ico",
-  },
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Trading Desk",
   },
   themeColor: "#10b981",
 };

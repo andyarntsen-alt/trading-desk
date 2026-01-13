@@ -49,11 +49,25 @@ export async function PUT(
 
     const { id } = await params
     const body = await request.json()
+    const accountId = body.account_id || null
+
+    if (accountId) {
+      const { data: account } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('id', accountId)
+        .eq('user_id', user.id)
+        .single()
+
+      if (!account) {
+        return NextResponse.json({ error: 'Invalid account' }, { status: 400 })
+      }
+    }
 
     const { data: trade, error } = await supabase
       .from('trades')
       .update({
-        account_id: body.account_id,
+        account_id: accountId,
         symbol: body.symbol,
         direction: body.direction,
         entry_price: body.entry_price,

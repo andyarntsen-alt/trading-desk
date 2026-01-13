@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
@@ -9,6 +9,15 @@ export default function SignInPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        window.location.href = '/desk'
+      }
+    })
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,46 +39,52 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-center mb-8">Logg inn</h1>
-        
+    <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
+      <div className="w-full max-w-sm bg-[#0a0a0a] border border-[#1f1f1f] rounded-2xl p-8 shadow-2xl shadow-black/40">
+        <h1 className="text-2xl font-semibold text-center mb-2">Logg inn</h1>
+        <p className="text-center text-sm text-slate-400 mb-8">
+          Tilgang til Trading Desk
+        </p>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded text-sm">
+            <div className="bg-rose-500/10 border border-rose-500/30 text-rose-200 p-3 rounded-lg text-sm">
               {error}
             </div>
           )}
-          
+
           <input
             type="email"
             placeholder="E-post"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-4 py-3 border rounded-lg"
+            className="w-full px-4 py-3 rounded-lg bg-[#0d0d0d] border border-[#2a2a2a] text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30"
           />
-          
+
           <input
             type="password"
             placeholder="Passord"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-3 border rounded-lg"
+            className="w-full px-4 py-3 rounded-lg bg-[#0d0d0d] border border-[#2a2a2a] text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30"
           />
-          
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-black text-white rounded-lg disabled:opacity-50"
+            className="w-full py-3 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-60"
           >
             {loading ? 'Logger inn...' : 'Logg inn'}
           </button>
         </form>
-        
-        <p className="text-center mt-6 text-sm text-gray-600">
-          Ingen konto? <Link href="/sign-up" className="text-black font-medium">Registrer deg</Link>
+
+        <p className="text-center mt-6 text-sm text-slate-400">
+          Ingen konto?{' '}
+          <Link href="/sign-up" className="text-white font-medium hover:text-emerald-300 transition-colors">
+            Registrer deg
+          </Link>
         </p>
       </div>
     </div>

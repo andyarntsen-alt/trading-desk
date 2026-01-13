@@ -62,12 +62,29 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    const accountId = body.account_id || null
+    let accountBalance = null
+
+    if (accountId) {
+      const { data: account } = await supabase
+        .from('accounts')
+        .select('id, current_balance')
+        .eq('id', accountId)
+        .eq('user_id', user.id)
+        .single()
+
+      if (!account) {
+        return NextResponse.json({ error: 'Invalid account' }, { status: 400 })
+      }
+
+      accountBalance = account.current_balance
+    }
 
     const { data: trade, error } = await supabase
       .from('trades')
       .insert({
         user_id: user.id,
-        account_id: body.account_id || null,
+        account_id: accountId,
         symbol: body.symbol,
         direction: body.direction,
         entry_price: body.entry_price,
@@ -89,21 +106,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Update account balance if account is specified
-    if (body.account_id && body.pnl) {
-      const { data: account } = await supabase
+    if (accountId && body.pnl && accountBalance !== null) {
+      await supabase
         .from('accounts')
-        .select('current_balance')
-        .eq('id', body.account_id)
-        .single()
-
-      if (account) {
-        await supabase
-          .from('accounts')
-          .update({ 
-            current_balance: account.current_balance + body.pnl 
-          })
-          .eq('id', body.account_id)
-      }
+        .update({
+          current_balance: accountBalance + body.pnl,
+        })
+        .eq('id', accountId)
+        .eq('user_id', user.id)
     }
 
     return NextResponse.json(trade, { status: 201 })
