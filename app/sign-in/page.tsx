@@ -30,18 +30,25 @@ export default function SignInPage() {
 
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting login for:', email)
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log('Login response:', { data, error })
+
       if (error) {
+        console.error('Login error:', error)
         setError(error.message)
         setLoading(false)
       } else {
+        console.log('Login successful, redirecting...')
         window.location.href = '/desk'
       }
     } catch (err) {
+      console.error('Login exception:', err)
       setError(err instanceof Error ? err.message : 'Innlogging feilet')
       setLoading(false)
     }
