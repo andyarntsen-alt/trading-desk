@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trading Desk – Structured Trading Journal",
-  description: "Structured trading journal with daily prep, checklist, review, and performance analytics.",
+  title: "Trading Desk – Free Trading Journal",
+  description: "Free trading journal with daily prep, checklist, analytics, and cloud sync. Built for disciplined traders.",
   icons: {
     icon: [
       { url: "/brand/tradingdesk-icon-32.png", sizes: "32x32", type: "image/png" },
@@ -28,6 +28,26 @@ export const metadata: Metadata = {
     shortcut: "/brand/favicon.ico",
   },
   themeColor: "#10b981",
+  openGraph: {
+    type: "website",
+    url: "https://trading-desk-ebon.vercel.app/",
+    title: "Trading Desk – Free Trading Journal",
+    description: "Free trading journal with daily prep, checklist, analytics, and cloud sync. Built for disciplined traders.",
+    images: [
+      {
+        url: "https://trading-desk-ebon.vercel.app/brand/tradingdesk-icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "Trading Desk",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Trading Desk – Free Trading Journal",
+    description: "Free trading journal with daily prep, checklist, analytics, and cloud sync.",
+    images: ["https://trading-desk-ebon.vercel.app/brand/tradingdesk-icon-512.png"],
+  },
 };
 
 export default function RootLayout({
