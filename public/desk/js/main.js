@@ -1738,10 +1738,13 @@ function sanitizeHTML(str) {
           console.log('✅ Supabase sync complete - refreshing UI');
           // Refresh UI with loaded data
           setTimeout(() => {
+            const journal = loadJournal();
+            if (typeof renderJournal === 'function') renderJournal(journal);
             if (typeof renderJournalTable === 'function') renderJournalTable();
             if (typeof populateAccountDropdowns === 'function') populateAccountDropdowns();
             if (typeof renderAccountManager === 'function') renderAccountManager();
             if (typeof renderFinanceDashboard === 'function') renderFinanceDashboard();
+            if (typeof renderAccounts === 'function') renderAccounts();
           }, 100);
         }
       } catch (e) {

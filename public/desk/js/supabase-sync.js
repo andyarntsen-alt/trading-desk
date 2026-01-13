@@ -28,22 +28,29 @@ const SupabaseSync = {
         throw new Error('Failed to load trades');
       }
       const trades = await res.json();
-      // Transform from DB format to app format
+      // Transform from DB format to frontend format
       this._cache.trades = trades.map(t => ({
         id: t.id,
-        symbol: t.symbol,
+        supabaseId: t.id, // Mark as synced
+        instrument: t.symbol,
         direction: t.direction,
-        entryPrice: t.entry_price,
-        exitPrice: t.exit_price,
-        quantity: t.quantity,
+        plan: {
+          entry: t.entry_price,
+          tp: t.exit_price,
+          sl: 0,
+          size: t.quantity,
+        },
         pnl: t.pnl,
         fees: t.fees,
         notes: t.notes,
         tags: t.tags || [],
         date: t.trade_date,
+        timestamp: t.trade_date ? `${t.trade_date}T00:00:00.000Z` : null,
+        time: t.trade_date ? new Date(t.trade_date).toLocaleString() : '',
         accountId: t.account_id,
         accountName: t.accounts?.name,
-        screenshotUrl: t.screenshot_url,
+        screenshot: t.screenshot_url,
+        result: t.pnl > 0 ? 'win' : t.pnl < 0 ? 'loss' : 'breakeven',
       }));
       return this._cache.trades;
     } catch (e) {
