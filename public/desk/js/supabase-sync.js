@@ -54,22 +54,27 @@ const SupabaseSync = {
 
   async saveTrade(trade) {
     try {
+      // Map frontend trade format to API format
+      const tradeDate = trade.timestamp 
+        ? trade.timestamp.slice(0, 10) 
+        : trade.date || new Date().toISOString().slice(0, 10);
+      
       const res = await fetch('/api/trades', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          symbol: trade.symbol,
-          direction: trade.direction,
-          entry_price: trade.entryPrice,
-          exit_price: trade.exitPrice,
-          quantity: trade.quantity,
-          pnl: trade.pnl,
+          symbol: trade.instrument || trade.symbol || 'UNKNOWN',
+          direction: trade.direction || 'long',
+          entry_price: trade.plan?.entry || trade.entryPrice || 0,
+          exit_price: trade.plan?.tp || trade.exitPrice || 0,
+          quantity: trade.plan?.size || trade.size || trade.quantity || 1,
+          pnl: trade.pnl || 0,
           fees: trade.fees || 0,
-          notes: trade.notes,
+          notes: trade.notes || '',
           tags: trade.tags || [],
-          trade_date: trade.date,
+          trade_date: tradeDate,
           account_id: trade.accountId || null,
-          screenshot_url: trade.screenshotUrl,
+          screenshot_url: trade.screenshotUrl || trade.screenshot || null,
         }),
       });
       if (!res.ok) throw new Error('Failed to save trade');
@@ -85,22 +90,26 @@ const SupabaseSync = {
 
   async updateTrade(id, trade) {
     try {
+      const tradeDate = trade.timestamp 
+        ? trade.timestamp.slice(0, 10) 
+        : trade.date || new Date().toISOString().slice(0, 10);
+
       const res = await fetch(`/api/trades/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          symbol: trade.symbol,
-          direction: trade.direction,
-          entry_price: trade.entryPrice,
-          exit_price: trade.exitPrice,
-          quantity: trade.quantity,
-          pnl: trade.pnl,
+          symbol: trade.instrument || trade.symbol || 'UNKNOWN',
+          direction: trade.direction || 'long',
+          entry_price: trade.plan?.entry || trade.entryPrice || 0,
+          exit_price: trade.plan?.tp || trade.exitPrice || 0,
+          quantity: trade.plan?.size || trade.size || trade.quantity || 1,
+          pnl: trade.pnl || 0,
           fees: trade.fees || 0,
-          notes: trade.notes,
+          notes: trade.notes || '',
           tags: trade.tags || [],
-          trade_date: trade.date,
+          trade_date: tradeDate,
           account_id: trade.accountId || null,
-          screenshot_url: trade.screenshotUrl,
+          screenshot_url: trade.screenshotUrl || trade.screenshot || null,
         }),
       });
       if (!res.ok) throw new Error('Failed to update trade');
