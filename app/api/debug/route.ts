@@ -16,12 +16,19 @@ export async function GET() {
     connectionTest = `exception: ${err instanceof Error ? err.message : 'unknown'}`
   }
 
+  // More detailed debug info
+  const keyStartsWithEyJ = supabaseKey?.startsWith('eyJ') || false
+  const keyLength = supabaseKey?.length || 0
+
   return NextResponse.json({
     hasSupabaseUrl: !!supabaseUrl,
     hasSupabaseKey: !!supabaseKey,
-    supabaseUrlPrefix: supabaseUrl ? supabaseUrl.substring(0, 20) + '...' : null,
-    supabaseKeyPrefix: supabaseKey ? supabaseKey.substring(0, 10) + '...' : null,
+    supabaseUrlPrefix: supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : null,
+    supabaseKeyPrefix: supabaseKey ? supabaseKey.substring(0, 15) + '...' : null,
+    keyStartsWithEyJ,
+    keyLength,
     nodeEnv: process.env.NODE_ENV,
+    vercelEnv: process.env.VERCEL_ENV || 'not set',
     connectionTest,
   })
 }
