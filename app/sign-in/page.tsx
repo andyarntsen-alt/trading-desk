@@ -9,47 +9,67 @@ export default function SignInPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<string | null>(null)
 
+  // Test Supabase connection on load
   useEffect(() => {
-    try {
-      const supabase = createClient()
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session) {
+    const testConnection = async () => {
+      try {
+        const supabase = createClient()
+        
+        // Test 1: Check if client was created
+        setDebugInfo('Supabase client opprettet...')
+        
+        // Test 2: Try to get session
+        const { data, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          setDebugInfo(`Session error: ${error.message}`)
+        } else if (data.session) {
           window.location.href = '/desk'
+        } else {
+          setDebugInfo('Klar til innlogging')
         }
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Kunne ikke koble til Supabase')
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Ukjent feil'
+        setDebugInfo(`Connection error: ${errorMsg}`)
+        setError(errorMsg)
+      }
     }
+    
+    testConnection()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
+    setDebugInfo('Logger inn...')
 
     try {
       const supabase = createClient()
-      console.log('Attempting login for:', email)
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      console.log('Login response:', { data, error })
-
       if (error) {
         console.error('Login error:', error)
-        setError(error.message)
+        setError(`${error.message} (${error.status || 'no status'})`)
+        setDebugInfo(`Error code: ${error.status}, name: ${error.name}`)
         setLoading(false)
       } else {
-        console.log('Login successful, redirecting...')
+        setDebugInfo('Innlogging vellykket, omdirigerer...')
         window.location.href = '/desk'
       }
     } catch (err) {
       console.error('Login exception:', err)
-      setError(err instanceof Error ? err.message : 'Innlogging feilet')
+      const errorMsg = err instanceof Error 
+        ? `${err.name}: ${err.message}` 
+        : 'Ukjent feil'
+      setError(errorMsg)
+      setDebugInfo(`Exception type: ${err?.constructor?.name}`)
       setLoading(false)
     }
   }
@@ -102,6 +122,13 @@ export default function SignInPage() {
             Registrer deg
           </Link>
         </p>
+
+        {/* Debug info */}
+        {debugInfo && (
+          <p className="text-center mt-4 text-xs text-slate-500 font-mono">
+            {debugInfo}
+          </p>
+        )}
       </div>
     </div>
   )
